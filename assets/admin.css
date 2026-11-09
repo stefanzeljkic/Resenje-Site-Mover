@@ -1,0 +1,64 @@
+/* Resenje Site Mover admin screen. */
+.rsmover-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 320px;
+	gap: 20px;
+	align-items: start;
+}
+
+.rsmover-card,
+.rsmover-donate {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 6px;
+	padding: 4px 20px 12px;
+	margin-bottom: 20px;
+}
+
+.rsmover-card[hidden] {
+	display: none;
+}
+
+.rsmover-donate {
+	background: #fff8e5;
+	border-color: #f0c33c;
+}
+
+.rsmover-donate-buttons .button {
+	margin: 0 6px 6px 0;
+}
+
+.rsmover-free {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.rsmover-warning {
+	color: #b32d2e;
+	font-weight: 600;
+}
+
+.rsmover-bar {
+	height: 18px;
+	background: #f0f0f1;
+	border-radius: 9px;
+	overflow: hidden;
+}
+
+.rsmover-bar span {
+	display: block;
+	height: 100%;
+	background: #2271b1;
+	transition: width 0.3s;
+}
+
+.rsmover-error {
+	color: #b32d2e;
+	font-weight: 600;
+}
+
+@media (max-width: 960px) {
+	.rsmover-grid {
+		grid-template-columns: 1fr;
+	}
+}
