@@ -15,7 +15,7 @@
   - Backup dir: 403 for dir, .rsm, job-state.php (Apache); download without nonce 400; AJAX without login 0.
   - Plugin Check (incl. experimental): no errors. PHPCS WordPress: clean. PHPCompatibilityWP 7.4+: OK. Gitleaks: 0.
 
-## 2026-11-10 — 1.1.0 (local commit, NOT pushed — waiting for Stefan)
+## 2026-11-10 — 1.1.0 released (pushed + GitHub release on Stefan's ok)
 - Stefan tested 1.0.0 on real hosting: migration worked but every page except the home page gave 404 (LiteSpeed). Cause: the target had no WordPress
   block in .htaccess and rewrite rules were only deleted. Fix: after the swap the option rsmover_flush_rewrite is set; the next WEB request (init 99)
   runs flush_rewrite_rules(true) and writes .htaccess (skipped under WP-CLI so the flag waits for a web request). Verified: B without .htaccess,
@@ -39,7 +39,7 @@
   no link change needed in either plugin). Chrome extension blocks patreon.com, so Stefan did it himself.
 
 ## Open
-- Push + GitHub release of 1.1.0 only on Stefan's word.
+- Stefan tests 1.1.0 on real hosting (SFTP/S3/FTP, schedules, 404 fix).
 - WordPress.org submission: only after the popup plugin's review is done (WP.org allows one pending submission per account).
 - Not tested yet: real shared hosting (nginx without .htaccess, low memory_limit), MySQL 8 → MariaDB collation path, very large sites (>2 GB, 32-bit PHP).
 - Ideas: exclude list in UI, Google Drive / Dropbox (need OAuth app registration), restore directly from remote storage.
