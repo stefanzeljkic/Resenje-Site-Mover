@@ -22,9 +22,12 @@ class RSMover_CLI {
 		do {
 			try {
 				$job = RSMover_Jobs::step( 30 );
-			} catch ( Exception $e ) {
+			} catch ( Throwable $e ) {
 				WP_CLI::error( html_entity_decode( $e->getMessage(), ENT_QUOTES ) );
 				return array();
+			}
+			if ( ! empty( $job['busy'] ) ) {
+				sleep( 5 );
 			}
 			$progress = RSMover_Jobs::progress( $job );
 			if ( $progress['message'] !== $last ) {
@@ -53,7 +56,7 @@ class RSMover_CLI {
 	public function export( $args, $assoc_args ) {
 		try {
 			RSMover_Jobs::start( 'export', array( 'exclude_media' => ! empty( $assoc_args['exclude-media'] ) ) );
-		} catch ( Exception $e ) {
+		} catch ( Throwable $e ) {
 			WP_CLI::error( html_entity_decode( $e->getMessage(), ENT_QUOTES ) );
 		}
 		$job = $this->run();
@@ -89,11 +92,48 @@ class RSMover_CLI {
 		WP_CLI::confirm( 'This replaces all content, users and settings of this site. Continue?', $assoc_args );
 		try {
 			RSMover_Jobs::start( 'import', array( 'archive' => $name ) );
-		} catch ( Exception $e ) {
+		} catch ( Throwable $e ) {
 			WP_CLI::error( html_entity_decode( $e->getMessage(), ENT_QUOTES ) );
 		}
 		$this->run();
 		WP_CLI::success( 'Import complete. Log in with a user of the source site.' );
+	}
+
+	/**
+	 * Runs the scheduled backup now (with upload to remote storage and retention), e.g. from a server cron job.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp site-mover scheduled-backup
+	 *
+	 * @subcommand scheduled-backup
+	 */
+	public function scheduled_backup() {
+		try {
+			RSMover_Schedule::start();
+		} catch ( Throwable $e ) {
+			WP_CLI::error( html_entity_decode( $e->getMessage(), ENT_QUOTES ) );
+		}
+		$this->run();
+		$log = get_option( RSMover_Schedule::LOG, array() );
+		WP_CLI::success( isset( $log[0]['message'] ) ? $log[0]['message'] : 'Done.' );
+	}
+
+	/**
+	 * Tests the remote storage configured for scheduled backups.
+	 *
+	 * @subcommand test-remote
+	 */
+	public function test_remote() {
+		try {
+			$remote = RSMover_Remote::from_settings( RSMover_Schedule::get() );
+			if ( ! $remote ) {
+				WP_CLI::error( 'No remote storage is selected.' );
+			}
+			WP_CLI::success( html_entity_decode( $remote->test(), ENT_QUOTES ) );
+		} catch ( Throwable $e ) {
+			WP_CLI::error( html_entity_decode( $e->getMessage(), ENT_QUOTES ) );
+		}
 	}
 
 	/**

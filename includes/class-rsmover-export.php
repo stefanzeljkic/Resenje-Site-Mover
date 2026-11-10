@@ -50,7 +50,7 @@ class RSMover_Export {
 	public static function start( array $options ) {
 		global $wpdb;
 
-		$name    = RSMover_Storage::new_archive_name( 'backup' );
+		$name    = RSMover_Storage::new_archive_name( isset( $options['kind'] ) && 'auto' === $options['kind'] ? 'auto' : 'backup' );
 		$archive = RSMover_Storage::archive_path( $name, false );
 		if ( ! $archive || ! RSMover_Archive::create( $archive ) ) {
 			throw new RuntimeException( esc_html__( 'Cannot create the backup file. Check that wp-content is writable.', 'resenje-site-mover' ) );

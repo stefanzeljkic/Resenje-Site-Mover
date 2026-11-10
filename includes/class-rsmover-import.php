@@ -479,6 +479,7 @@ class RSMover_Import {
 	private static function step_swap( array $job ) {
 		global $wpdb;
 		self::prepare_session();
+		$schedule = RSMover_Schedule::snapshot();
 		foreach ( array_keys( $job['tables'] ) as $rel ) {
 			$tmp   = self::tmp_name( $rel );
 			$final = $job['new_prefix'] . $rel;
@@ -500,7 +501,10 @@ class RSMover_Import {
 			update_option( 'active_plugins', array_values( $active ) );
 		}
 		delete_option( 'rewrite_rules' );
+		// Rules and .htaccess are rebuilt on the next request, when the imported settings are loaded.
+		update_option( 'rsmover_flush_rewrite', 1, true );
 		update_option( 'rsmover_last_success', time(), false );
+		RSMover_Schedule::restore( $schedule );
 
 		wp_delete_file( RSMover_Storage::work_path( $job['db_file'] ) );
 		$job['phase'] = 'done';

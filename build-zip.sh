@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 slug=resenje-site-mover
 rm -rf dist && mkdir -p "dist/$slug"
-cp -r "$slug.php" uninstall.php readme.txt LICENSE includes assets "dist/$slug/"
+cp -r "$slug.php" uninstall.php readme.txt LICENSE includes assets vendor "dist/$slug/"
 if command -v zip >/dev/null 2>&1; then
 	( cd dist && zip -qr "$slug.zip" "$slug" )
 else

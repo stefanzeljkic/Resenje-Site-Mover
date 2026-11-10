@@ -62,3 +62,25 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+.rsmover .form-table tr[hidden] {
+	display: none;
+}
+
+.rsmover-ok {
+	color: #00a32a;
+}
+
+.rsmover-log-ok {
+	color: #00a32a;
+	font-weight: 600;
+}
+
+.rsmover-log-error {
+	color: #d63638;
+	font-weight: 600;
+}
+
+.rsmover-log-skipped {
+	color: #996800;
+}

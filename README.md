@@ -12,8 +12,10 @@ No premium version, no size limits — kept alive by donations ☕.
 - Large backups are uploaded in parts (hosting upload limit does not matter)
 - Safe import: data goes into temporary tables first and replaces the live tables only at the very end
 - Optional: leave out the media library
+- **Scheduled backups** (hourly / daily / weekly / monthly) with retention on the server and on remote storage, e-mail on failure
+- **Remote storage:** SFTP / SSH (password or private key, host key pinning), Amazon S3 and S3-compatible (Backblaze B2, Wasabi, Cloudflare R2, MinIO, DigitalOcean Spaces …), FTP / FTPS — resumable uploads with retries, credentials stored encrypted
 - Backups in a protected folder with a random name (`.htaccess`, `web.config`, `index.php`); download / restore / delete from the list
-- WP-CLI: `wp site-mover export [--exclude-media]`, `wp site-mover import <file> [--yes]`, `wp site-mover list`
+- WP-CLI: `wp site-mover export [--exclude-media]`, `wp site-mover import <file> [--yes]`, `wp site-mover list`, `wp site-mover scheduled-backup`, `wp site-mover test-remote`
 - No external services, no tracking, no account
 
 ## ⚙️ How to move a site
@@ -22,7 +24,11 @@ No premium version, no size limits — kept alive by donations ☕.
 2. **New hosting:** install a fresh WordPress and Resenje Site Mover.
 3. **New site:** Site Mover → *Import* → choose the file → *Upload and import*.
 4. Log in with the **old site's** user and password.
-5. Settings → Permalinks → *Save* once.
+5. Done — permalinks / `.htaccess` are rebuilt automatically (nginx: the host must use the standard WordPress rules).
+
+## ⏰ Scheduled backups
+
+Site Mover → *Scheduled backups*: choose how often, where to copy the backups (SFTP, S3, FTP or only this server) and how many to keep. WordPress runs schedules when the site gets visits; on quiet sites add a server cron job that calls `wp-cron.php` or runs `wp site-mover scheduled-backup`. The background job continues itself with short requests to the site (and a cron fallback), so it also works with short PHP time limits.
 
 ## ⚠️ Limits
 
@@ -50,6 +56,8 @@ Bug reports and pull requests are welcome.
 ## 📄 License
 
 [GPLv2 or later](https://www.gnu.org/licenses/gpl-2.0.html).
+
+Bundled libraries (in `vendor/`, used only for SFTP): [phpseclib 3](https://github.com/phpseclib/phpseclib) and [paragonie/constant_time_encoding](https://github.com/paragonie/constant_time_encoding), both MIT licensed (license files included).
 
 ## ☕ Support development
 
