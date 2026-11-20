@@ -177,7 +177,7 @@ class RSMover_Remote_FTP extends RSMover_Remote {
 		while ( $offset < $size ) {
 			$data = self::read_part( $local, $offset, self::PART );
 			if ( '' === $data ) {
-				throw new RuntimeException( 'Cannot read the backup file.' );
+				throw new RuntimeException( esc_html__( 'Cannot read the backup file.', 'resenje-site-mover' ) );
 			}
 			$this->put( $conn, $part, $data, $offset );
 			$offset += strlen( $data );

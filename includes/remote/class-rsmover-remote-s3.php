@@ -262,7 +262,7 @@ class RSMover_Remote_S3 extends RSMover_Remote {
 		$max = (int) ceil( $size / $part_size );
 		for ( $i = 1; $i <= $max; $i++ ) {
 			if ( empty( $state['etags'][ (string) $i ] ) ) {
-				throw new RuntimeException( 'S3: a part of the upload is missing.' );
+				throw new RuntimeException( esc_html__( 'S3: a part of the upload is missing.', 'resenje-site-mover' ) );
 			}
 			$xml .= '<Part><PartNumber>' . $i . '</PartNumber><ETag>' . esc_html( $state['etags'][ (string) $i ] ) . '</ETag></Part>';
 		}

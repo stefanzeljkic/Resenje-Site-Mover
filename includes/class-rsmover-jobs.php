@@ -82,7 +82,7 @@ class RSMover_Jobs {
 		} elseif ( 'import' === $type ) {
 			$job = RSMover_Import::start( isset( $options['archive'] ) ? (string) $options['archive'] : '' );
 		} else {
-			throw new RuntimeException( 'Unknown job type.' );
+			throw new RuntimeException( esc_html__( 'Unknown job type.', 'resenje-site-mover' ) );
 		}
 		$job['updated'] = time();
 		RSMover_Storage::set_job( $job );

@@ -114,7 +114,7 @@ class RSMover_Archive {
 	public static function add_file( $archive, $src, $rel, $size, $offset, $deadline ) {
 		$out = fopen( $archive, 'ab' );
 		if ( ! $out ) {
-			throw new RuntimeException( 'Cannot write archive.' );
+			throw new RuntimeException( esc_html__( 'Cannot write archive.', 'resenje-site-mover' ) );
 		}
 		if ( 0 === $offset ) {
 			fwrite( $out, self::header( $rel, $size, (int) @filemtime( $src ) ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unreadable mtime is not an error.
@@ -160,18 +160,18 @@ class RSMover_Archive {
 			return null;
 		}
 		if ( self::ENTRY_MAGIC !== $magic ) {
-			throw new RuntimeException( 'Damaged archive (bad entry header).' );
+			throw new RuntimeException( esc_html__( 'Damaged archive (bad entry header).', 'resenje-site-mover' ) );
 		}
 		$len = unpack( 'V', (string) fread( $h, 4 ) );
 		$len = is_array( $len ) ? (int) $len[1] : 0;
 		if ( $len < 1 || $len > self::MAX_PATH ) {
-			throw new RuntimeException( 'Damaged archive (bad path length).' );
+			throw new RuntimeException( esc_html__( 'Damaged archive (bad path length).', 'resenje-site-mover' ) );
 		}
 		$path  = (string) fread( $h, $len );
 		$size  = unpack( 'P', (string) fread( $h, 8 ) );
 		$mtime = unpack( 'V', (string) fread( $h, 4 ) );
 		if ( strlen( $path ) !== $len || ! is_array( $size ) || ! is_array( $mtime ) ) {
-			throw new RuntimeException( 'Damaged archive (truncated header).' );
+			throw new RuntimeException( esc_html__( 'Damaged archive (truncated header).', 'resenje-site-mover' ) );
 		}
 		return array(
 			'path'  => $path,
@@ -191,7 +191,7 @@ class RSMover_Archive {
 	public static function open( $path ) {
 		$h = fopen( $path, 'rb' );
 		if ( ! $h || self::MAGIC !== fread( $h, strlen( self::MAGIC ) ) ) {
-			throw new RuntimeException( 'Not a Site Mover archive.' );
+			throw new RuntimeException( esc_html__( 'Not a Site Mover archive.', 'resenje-site-mover' ) );
 		}
 		return $h;
 	}
@@ -211,7 +211,7 @@ class RSMover_Archive {
 		while ( null !== $entry ) {
 			if ( $entry['data'] + $entry['size'] > $total ) {
 				fclose( $h );
-				throw new RuntimeException( 'Damaged archive (incomplete file data).' );
+				throw new RuntimeException( esc_html__( 'Damaged archive (incomplete file data).', 'resenje-site-mover' ) );
 			}
 			if ( RSMover_Export::MANIFEST === $entry['path'] && $entry['size'] < 1048576 ) {
 				$manifest = json_decode( (string) fread( $h, $entry['size'] ), true );
@@ -221,7 +221,7 @@ class RSMover_Archive {
 		}
 		fclose( $h );
 		if ( ! is_array( $manifest ) || empty( $manifest['format'] ) ) {
-			throw new RuntimeException( 'Archive has no manifest (incomplete backup?).' );
+			throw new RuntimeException( esc_html__( 'Archive has no manifest (incomplete backup?).', 'resenje-site-mover' ) );
 		}
 		return $manifest;
 	}

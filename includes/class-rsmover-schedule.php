@@ -555,7 +555,7 @@ class RSMover_Schedule {
 		$remote = RSMover_Remote::from_settings( $s );
 		$path   = RSMover_Storage::archive_path( $job['archive'] );
 		if ( ! $remote || ! $path ) {
-			throw new RuntimeException( 'The backup file or the remote storage settings are missing.' );
+			throw new RuntimeException( esc_html__( 'The backup file or the remote storage settings are missing.', 'resenje-site-mover' ) );
 		}
 		try {
 			if ( 'upload' === $job['phase'] ) {

@@ -184,7 +184,7 @@ class RSMover_Remote_SFTP extends RSMover_Remote {
 		while ( $offset < $size ) {
 			$data = self::read_part( $local, $offset, self::PART );
 			if ( '' === $data ) {
-				throw new RuntimeException( 'Cannot read the backup file.' );
+				throw new RuntimeException( esc_html__( 'Cannot read the backup file.', 'resenje-site-mover' ) );
 			}
 			if ( ! $sftp->put( $part, $data, \phpseclib3\Net\SFTP::SOURCE_STRING, $offset ) ) {
 				throw new RuntimeException( esc_html__( 'SFTP: writing the backup failed (disk full or no permission?).', 'resenje-site-mover' ) );

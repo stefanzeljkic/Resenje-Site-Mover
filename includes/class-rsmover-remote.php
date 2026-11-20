@@ -88,7 +88,7 @@ abstract class RSMover_Remote {
 				require_once __DIR__ . '/remote/class-rsmover-remote-ftp.php';
 				return new RSMover_Remote_FTP( $cfg );
 		}
-		throw new RuntimeException( 'Unknown remote storage type.' );
+		throw new RuntimeException( esc_html__( 'Unknown remote storage type.', 'resenje-site-mover' ) );
 	}
 
 	/**
@@ -175,7 +175,7 @@ abstract class RSMover_Remote {
 		// phpcs:disable WordPress.WP.AlternativeFunctions -- partial reads of a large local file.
 		$h = fopen( $local, 'rb' );
 		if ( ! $h ) {
-			throw new RuntimeException( 'Cannot read the backup file.' );
+			throw new RuntimeException( esc_html__( 'Cannot read the backup file.', 'resenje-site-mover' ) );
 		}
 		fseek( $h, $offset );
 		$data = '';
