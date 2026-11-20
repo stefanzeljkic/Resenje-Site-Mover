@@ -81,6 +81,7 @@ class RSMover_Replacer {
 			try {
 				$pos = 0;
 				$out = $this->walk( $value, $pos, $depth );
+				// The whole value must be consumed; trailing bytes mean it was only text that looked serialized.
 				if ( strlen( $value ) === $pos ) {
 					return $out;
 				}
@@ -89,6 +90,7 @@ class RSMover_Replacer {
 				unset( $e );
 			}
 		}
+		// Plain text (or broken serialized data): a simple replace. The loop is a cheap pre-check so untouched values are returned as they are.
 		$has = false;
 		foreach ( $this->from as $from ) {
 			if ( false !== strpos( $value, $from ) ) {
@@ -183,6 +185,7 @@ class RSMover_Replacer {
 			case 'd':
 			case 'r':
 			case 'R':
+				// Scalars (bool, int, float) and back-references hold no text, so they are copied after checking the characters.
 				$this->expect( $s, $pos, $type . ':' );
 				$val = $this->read_until( $s, $pos, ';' );
 				if ( ! preg_match( '/^[0-9eE.+\-INFA]*$/', $val ) ) {
@@ -195,9 +198,12 @@ class RSMover_Replacer {
 				if ( $pos + $len + 2 > strlen( $s ) ) {
 					throw new RuntimeException( 'bad' );
 				}
+				// The length prefix counts bytes (not characters), so the string is cut by byte length.
 				$str  = substr( $s, $pos, $len );
 				$pos += $len;
 				$this->expect( $s, $pos, '";' );
+				// The value may itself be serialized data (double serialization), so it goes through replace() again;
+				// the new byte length is written back so the result stays valid.
 				$new = $this->replace( $str, $depth + 1 );
 				return 's:' . strlen( $new ) . ':"' . $new . '";';
 			case 'E':
@@ -212,6 +218,7 @@ class RSMover_Replacer {
 				$this->expect( $s, $pos, 'a:' );
 				$count = $this->read_len( $s, $pos, ':{' );
 				$out   = 'a:' . $count . ':{';
+				// An array has $count pairs, so $count * 2 values (keys and values are both walked: keys can hold URLs too).
 				for ( $i = 0; $i < $count * 2; $i++ ) {
 					$out .= $this->walk( $s, $pos, $depth + 1 );
 				}
@@ -225,6 +232,7 @@ class RSMover_Replacer {
 				$this->expect( $s, $pos, '":' );
 				$count = $this->read_len( $s, $pos, ':{' );
 				$out   = 'O:' . $len . ':"' . $class . '":' . $count . ':{';
+				// Only the text of the properties is rewritten. The object is never created, so no class code can run.
 				for ( $i = 0; $i < $count * 2; $i++ ) {
 					$out .= $this->walk( $s, $pos, $depth + 1 );
 				}

@@ -35,6 +35,7 @@ class RSMover_Import {
 	public static function start( $name ) {
 		global $wpdb;
 
+		// Checks that must pass before anything on this site is touched.
 		if ( is_multisite() ) {
 			throw new RuntimeException( esc_html__( 'Multisite networks are not supported.', 'resenje-site-mover' ) );
 		}
@@ -58,6 +59,8 @@ class RSMover_Import {
 			throw new RuntimeException( esc_html__( 'Not enough free disk space for this import.', 'resenje-site-mover' ) );
 		}
 
+		// Job state. An import runs in phases: files (copy wp-content and unpack the database dump), db (load it into
+		// temporary tables with the addresses replaced) and swap (rename the temporary tables over the live ones).
 		return array(
 			'type'       => 'import',
 			'archive'    => $name,
@@ -404,6 +407,8 @@ class RSMover_Import {
 		if ( 0 === $count ) {
 			return;
 		}
+		// When the table prefix differs (wp_ -> nb_), the prefix is also stored inside two tables:
+		// option names (wp_user_roles) and user meta keys (wp_capabilities), so those columns are renamed too.
 		$rename_col = null;
 		if ( $job['old_prefix'] !== $job['new_prefix'] ) {
 			if ( 'options' === $rel ) {
@@ -413,6 +418,7 @@ class RSMover_Import {
 			}
 		}
 
+		// Rows are inserted in batches of about INSERT_BYTES, and everything is a %i or %s placeholder so $wpdb->prepare() escapes it.
 		$head   = 'INSERT IGNORE INTO %i (' . implode( ',', array_fill( 0, $count, '%i' ) ) . ') VALUES ';
 		$groups = array();
 		$args   = array_merge( array( $tmp ), $columns );
@@ -487,6 +493,8 @@ class RSMover_Import {
 			$final = $job['new_prefix'] . $rel;
 			$old   = self::OLD_PREFIX . substr( md5( $rel ), 0, 20 );
 			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $old ) );
+			// One RENAME TABLE statement moves the live table aside and the new one into its place at the same moment,
+			// so the site never has a missing table. The old table is dropped right after.
 			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $final ) ) ) ) {
 				$wpdb->query( $wpdb->prepare( 'RENAME TABLE %i TO %i, %i TO %i', $final, $old, $tmp, $final ) );
 				$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $old ) );

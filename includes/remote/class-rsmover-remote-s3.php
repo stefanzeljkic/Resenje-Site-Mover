@@ -104,6 +104,8 @@ class RSMover_Remote_S3 extends RSMover_Remote {
 	private function request( $method, $key, array $query = array(), $body = '' ) {
 		list( $scheme, $host, $path ) = $this->target( $key );
 
+		// The request is signed with AWS Signature Version 4 (no SDK needed):
+		// 1. canonical request, 2. string to sign, 3. signing key derived from the secret, 4. signature.
 		$now     = time();
 		$amzdate = gmdate( 'Ymd\THis\Z', $now );
 		$day     = gmdate( 'Ymd', $now );
@@ -113,6 +115,7 @@ class RSMover_Remote_S3 extends RSMover_Remote {
 			'x-amz-content-sha256' => $hash,
 			'x-amz-date'           => $amzdate,
 		);
+		// Headers must be lower case and sorted by name, each followed by a newline.
 		ksort( $headers );
 		$canonical_headers = '';
 		foreach ( $headers as $name => $value ) {
@@ -120,6 +123,7 @@ class RSMover_Remote_S3 extends RSMover_Remote {
 		}
 		$signed = implode( ';', array_keys( $headers ) );
 
+		// The query string is sorted and every name and value is percent-encoded the way S3 expects.
 		ksort( $query );
 		$pairs = array();
 		foreach ( $query as $name => $value ) {
@@ -130,12 +134,14 @@ class RSMover_Remote_S3 extends RSMover_Remote {
 		$canonical = $method . "\n" . $path . "\n" . $query_string . "\n" . $canonical_headers . "\n" . $signed . "\n" . $hash;
 		$scope     = $day . '/' . $this->region() . '/s3/aws4_request';
 		$to_sign   = "AWS4-HMAC-SHA256\n" . $amzdate . "\n" . $scope . "\n" . hash( 'sha256', $canonical );
+		// The signing key is a chain of HMACs: secret -> date -> region -> service -> "aws4_request".
 		$k         = hash_hmac( 'sha256', $day, 'AWS4' . $this->opt( 'secret_key' ), true );
 		$k         = hash_hmac( 'sha256', $this->region(), $k, true );
 		$k         = hash_hmac( 'sha256', 's3', $k, true );
 		$k         = hash_hmac( 'sha256', 'aws4_request', $k, true );
 		$signature = hash_hmac( 'sha256', $to_sign, $k );
 
+		// 'host' is signed but not sent here: WordPress adds it from the URL.
 		$send = array(
 			'x-amz-content-sha256' => $hash,
 			'x-amz-date'           => $amzdate,
@@ -212,12 +218,14 @@ class RSMover_Remote_S3 extends RSMover_Remote {
 		$size = (int) filesize( $local );
 		$key  = $this->key( $name );
 
+		// Small files go up in one PUT. Larger files use a multipart upload, one part per step, so a time limit never breaks it.
 		if ( $size <= self::MIN_PART ) {
 			$this->request( 'PUT', $key, array(), self::read_part( $local, 0, $size ) );
 			return $size;
 		}
 
 		if ( empty( $state['upload_id'] ) ) {
+			// Part size in whole MB, large enough that the file fits into the maximum number of parts S3 allows.
 			$part_size = (int) max( self::MIN_PART, ceil( $size / self::MAX_PARTS / 1048576 ) * 1048576 );
 			$answer    = $this->request( 'POST', $key, array( 'uploads' => '' ) );
 			$upload_id = self::xml_value( $answer['body'], 'UploadId' );
@@ -258,6 +266,7 @@ class RSMover_Remote_S3 extends RSMover_Remote {
 			}
 		}
 
+		// All parts are uploaded: S3 needs the list of part numbers and their ETags to join them into one object.
 		$xml = '<CompleteMultipartUpload>';
 		$max = (int) ceil( $size / $part_size );
 		for ( $i = 1; $i <= $max; $i++ ) {
