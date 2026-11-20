@@ -219,6 +219,10 @@ class RSMover_Import {
 					$rel = self::safe_content_path( substr( $entry['path'], strlen( RSMover_Export::CONTENT ) ) );
 					if ( false !== $rel ) {
 						$target = RSMover_Storage::content_dir() . '/' . $rel;
+						// Never write through an existing symlink: it could redirect the file outside wp-content.
+						if ( is_link( $target ) ) {
+							$target = null;
+						}
 					}
 					++$job['files'];
 				}
@@ -274,8 +278,10 @@ class RSMover_Import {
 			}
 		}
 		if ( ! $out ) {
-			/* translators: %s: file path */
-			throw new RuntimeException( esc_html( sprintf( __( 'Cannot write %s. Check file permissions.', 'resenje-site-mover' ), $cur['target'] ) ) );
+			// Show the path relative to wp-content so the message does not reveal the server's directory layout.
+			$shown = ltrim( substr( $cur['target'], strlen( RSMover_Storage::content_dir() ) ), '/' );
+			/* translators: %s: file path relative to wp-content */
+			throw new RuntimeException( esc_html( sprintf( __( 'Cannot write %s. Check file permissions.', 'resenje-site-mover' ), $shown ) ) );
 		}
 		fseek( $h, $cur['data'] + $written );
 		while ( $written < $cur['size'] ) {
@@ -327,7 +333,13 @@ class RSMover_Import {
 		if ( 0 !== strpos( $sql, 'CREATE TABLE `{{TABLE}}`' ) ) {
 			throw new RuntimeException( esc_html__( 'Damaged archive (unexpected SQL).', 'resenje-site-mover' ) );
 		}
-		$sql = 'CREATE TABLE `' . $tmp . '`' . substr( $sql, strlen( 'CREATE TABLE `{{TABLE}}`' ) );
+		// The statement must be one single CREATE TABLE: a ';' outside quoted names and strings would start a second statement.
+		$rest     = substr( $sql, strlen( 'CREATE TABLE `{{TABLE}}`' ) );
+		$unquoted = preg_replace( '/`(?:[^`]|``)*`|\'(?:[^\'\\\\]|\\\\.|\'\')*\'|"(?:[^"\\\\]|\\\\.|"")*"/s', '', $rest );
+		if ( null === $unquoted || false !== strpos( $unquoted, ';' ) ) {
+			throw new RuntimeException( esc_html__( 'Damaged archive (unexpected SQL).', 'resenje-site-mover' ) );
+		}
+		$sql = 'CREATE TABLE `' . $tmp . '`' . $rest;
 		// Foreign keys reference the source table names and need unique names; they are dropped.
 		$sql = preg_replace( '/,\s*CONSTRAINT `[^`]*` FOREIGN KEY [^\n]*/', '', $sql );
 		// MySQL 8 collations are unknown to MariaDB and older MySQL.

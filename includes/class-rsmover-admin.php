@@ -412,9 +412,13 @@ class RSMover_Admin {
 		// Large archives are appended part by part; WP_Filesystem has no append API.
 		// phpcs:disable WordPress.WP.AlternativeFunctions
 		$offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
-		$final  = ! empty( $_POST['final'] );
+		$final  = isset( $_POST['final'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['final'] ) );
 		$name   = isset( $_POST['archive'] ) ? sanitize_file_name( wp_unslash( $_POST['archive'] ) ) : '';
-		$tmp    = isset( $_FILES['chunk']['tmp_name'] ) ? sanitize_text_field( $_FILES['chunk']['tmp_name'] ) : '';
+		$tmp    = '';
+		// Only a part that PHP received without an error is used; is_uploaded_file() below confirms it came from this request.
+		if ( isset( $_FILES['chunk']['tmp_name'], $_FILES['chunk']['error'] ) && is_string( $_FILES['chunk']['tmp_name'] ) && UPLOAD_ERR_OK === (int) $_FILES['chunk']['error'] ) {
+			$tmp = sanitize_text_field( wp_unslash( $_FILES['chunk']['tmp_name'] ) );
+		}
 
 		if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
 			wp_send_json_error( array( 'message' => __( 'Upload failed (no data received). The part may be larger than the server allows.', 'resenje-site-mover' ) ) );

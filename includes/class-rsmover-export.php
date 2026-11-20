@@ -320,7 +320,8 @@ class RSMover_Export {
 			RecursiveIteratorIterator::CATCH_GET_CHILD
 		);
 		foreach ( $iterator as $file ) {
-			if ( ! $file->isFile() || ! $file->isReadable() ) {
+			// Symlinked files are skipped like symlinked folders: they could point outside wp-content (for example to /etc).
+			if ( $file->isLink() || ! $file->isFile() || ! $file->isReadable() ) {
 				continue;
 			}
 			$rel = substr( wp_normalize_path( $file->getPathname() ), $len );
