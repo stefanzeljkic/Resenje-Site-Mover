@@ -1,0 +1,12 @@
+# Files that belong to the repository but not to the plugin that is released to WordPress.org.
+# Used by deploy tools (for example 10up/action-wordpress-plugin-deploy and "wp dist-archive");
+# build-zip.sh already copies only the release files.
+.distignore
+.git
+.github
+.gitignore
+NOTES.md
+build-zip.sh
+dist
+tests
+*.zip
